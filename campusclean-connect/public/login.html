@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign in — CampusClean Connect</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+
+<div class="auth-shell">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <span class="brand-mark">🧹</span>
+      <strong style="font-family: var(--font-display); font-size:1.1rem;">CampusClean Connect</strong>
+    </div>
+    <p class="auth-eyebrow">Sign in to continue</p>
+    <h1 style="text-align:center; font-size:1.5rem;">Welcome back</h1>
+    <p class="auth-lede">Choose your role, then sign in with your campus credentials.</p>
+
+    <div class="role-select" role="group" aria-label="Select your role">
+      <div class="role-option active" data-role="student" tabindex="0">
+        <span class="role-icon">🎒</span>
+        <span class="role-label">Student</span>
+      </div>
+      <div class="role-option" data-role="cleaner" tabindex="0">
+        <span class="role-icon">🧹</span>
+        <span class="role-label">Cleaner</span>
+      </div>
+      <div class="role-option" data-role="admin" tabindex="0">
+        <span class="role-icon">🛡️</span>
+        <span class="role-label">Admin</span>
+      </div>
+    </div>
+
+    <div class="form-error" id="loginError"></div>
+
+    <form id="loginForm">
+      <div class="field">
+        <label for="username">Username</label>
+        <input type="text" id="username" autocomplete="username" required>
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input type="password" id="password" autocomplete="current-password" required>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block" id="loginSubmit">Sign in →</button>
+    </form>
+
+    <p class="auth-switch">New here? <a href="/register.html">Create a student or cleaner account</a></p>
+
+    <div class="demo-creds" id="demoCreds"></div>
+  </div>
+</div>
+
+<script src="/js/utils.js"></script>
+<script src="/js/login.js"></script>
+</body>
+</html>

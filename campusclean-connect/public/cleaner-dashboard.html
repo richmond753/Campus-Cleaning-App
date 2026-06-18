@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cleaner Dashboard — CampusClean Connect</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/main.css">
+<link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+
+<div class="dash-shell">
+  <aside class="dash-sidebar">
+    <a href="/" class="brand"><span class="brand-mark">🧹</span> CampusClean</a>
+    <nav class="dash-nav">
+      <button data-section="jobs" class="active"><span class="ico">🧹</span> Jobs</button>
+      <button data-section="messages"><span class="ico">💬</span> Messages</button>
+      <button data-section="ratings"><span class="ico">⭐</span> Ratings</button>
+    </nav>
+   <div class="dash-user">
+  <div class="avatar-wrap" id="avatarWrap" title="Change photo">
+    <div id="sidebarAvatar"></div>
+    <span class="avatar-edit-hint">Change</span>
+  </div>
+  <input type="file" id="avatarInput" accept="image/*" style="display:none;">
+  <div class="name" id="userName" style="margin-top:10px;">—</div>
+  <div class="role">Cleaner</div>
+  <button class="btn btn-outline-light btn-sm btn-block" data-logout>Sign out</button>
+</div>
+  </aside>
+
+  <main class="dash-main">
+    <div class="dash-topbar">
+      <button class="btn btn-ghost btn-sm" data-sidebar-toggle style="display:none;" aria-label="Toggle menu">☰</button>
+      <div>
+        <h1>Cleaner Dashboard</h1>
+        <p class="sub">Accept jobs, share your live location, and grow your rating.</p>
+      </div>
+      <div class="avail-toggle">
+        <span style="font-size:0.85rem; color:var(--ink-soft);">Status:</span>
+        <select class="avail-select" id="availabilitySelect">
+          <option value="available">Available</option>
+          <option value="busy">Busy</option>
+          <option value="offline">Offline</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="dash-content">
+
+      <section class="dash-section active" id="section-jobs">
+        <div class="stat-grid">
+          <div class="stat-card"><div class="label">Completed jobs</div><div class="value" id="statCompleted">—</div></div>
+          <div class="stat-card"><div class="label">Active jobs</div><div class="value" id="statActive">—</div></div>
+          <div class="stat-card"><div class="label">Average rating</div><div class="value" id="statRating">—</div></div>
+        </div>
+
+        <div class="tabs-inline">
+          <button data-jobtab="available" class="active">Available</button>
+          <button data-jobtab="active">Active</button>
+          <button data-jobtab="history">History</button>
+        </div>
+
+        <div class="booking-list" id="jobList"></div>
+      </section>
+
+      <section class="dash-section" id="section-messages">
+        <div style="display:grid; grid-template-columns: 260px 1fr; gap:18px;">
+          <div class="table-wrap" id="chatThreadList" style="max-height:460px; overflow-y:auto;"></div>
+          <div class="chat-panel">
+            <div class="chat-head"><h4 id="chatPartnerName">Select a conversation</h4></div>
+            <div class="chat-messages" id="chatMessages"><div class="chat-empty">Pick a job on the left to start chatting.</div></div>
+            <div class="chat-input-row">
+              <input type="text" id="chatInput" placeholder="Type a message…" disabled>
+              <button class="btn btn-primary btn-sm" id="chatSendBtn" disabled>Send</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="dash-section" id="section-ratings">
+        <div class="stat-card" style="margin-bottom:20px; max-width:260px;">
+          <div class="label">Your average</div>
+          <div class="value" id="ratingsAverage">—</div>
+        </div>
+        <div id="ratingsList"></div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/utils.js"></script>
+<script src="/js/chat-widget.js"></script>
+<script src="/js/cleaner-dashboard.js"></script>
+</body>
+</html>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard — CampusClean Connect</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/main.css">
+<link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+
+<div class="dash-shell">
+  <aside class="dash-sidebar">
+    <a href="/" class="brand"><span class="brand-mark">🧹</span> CampusClean</a>
+    <nav class="dash-nav">
+      <button data-section="overview" class="active"><span class="ico">📊</span> Overview</button>
+      <button data-section="users"><span class="ico">🛡️</span> Users</button>
+      <button data-section="bookings"><span class="ico">🧺</span> Bookings</button>
+      <button data-section="feedback"><span class="ico">📨</span> Feedback</button>
+    </nav>
+    <div class="dash-user">
+  <div class="avatar-wrap" id="avatarWrap" title="Change photo">
+    <div id="sidebarAvatar"></div>
+    <span class="avatar-edit-hint">Change</span>
+  </div>
+  <input type="file" id="avatarInput" accept="image/*" style="display:none;">
+  <div class="name" id="userName" style="margin-top:10px;">—</div>
+  <div class="role">Administrator</div>
+  <button class="btn btn-outline-light btn-sm btn-block" data-logout>Sign out</button>
+</div>
+  </aside>
+
+  <main class="dash-main">
+    <div class="dash-topbar">
+      <button class="btn btn-ghost btn-sm" data-sidebar-toggle style="display:none;" aria-label="Toggle menu">☰</button>
+      <div>
+        <h1>Admin Dashboard</h1>
+        <p class="sub">A platform-wide view of users, bookings, and feedback.</p>
+      </div>
+    </div>
+
+    <div class="dash-content">
+
+      <section class="dash-section active" id="section-overview">
+        <div class="stat-grid">
+          <div class="stat-card"><div class="label">Total users</div><div class="value" id="ovTotalUsers">—</div></div>
+          <div class="stat-card"><div class="label">Cleaners</div><div class="value" id="ovTotalCleaners">—</div></div>
+          <div class="stat-card"><div class="label">Students</div><div class="value" id="ovTotalStudents">—</div></div>
+          <div class="stat-card"><div class="label">Total bookings</div><div class="value" id="ovTotalBookings">—</div></div>
+          <div class="stat-card"><div class="label">Completed jobs</div><div class="value" id="ovCompleted">—</div></div>
+          <div class="stat-card"><div class="label">Platform rating</div><div class="value" id="ovAvgRating">—</div></div>
+          <div class="stat-card"><div class="label">New feedback</div><div class="value" id="ovPendingFeedback">—</div></div>
+        </div>
+      </section>
+
+      <section class="dash-section" id="section-users">
+        <div class="search-row">
+          <input type="text" id="userSearch" placeholder="Search users by name or username…">
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr><th>Name</th><th>Role</th><th>Email</th><th>Room / Status</th><th>Account</th><th>Joined</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="usersTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="dash-section" id="section-bookings">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr><th>Code</th><th>Student</th><th>Cleaner</th><th>Service</th><th>Room</th><th>Status</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="bookingsTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="dash-section" id="section-feedback">
+        <div id="feedbackList"></div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<script src="/js/utils.js"></script>
+<script src="/js/admin-dashboard.js"></script>
+</body>
+</html>

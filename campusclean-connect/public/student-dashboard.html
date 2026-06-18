@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Dashboard — CampusClean Connect</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="/css/main.css">
+<link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+
+<div class="dash-shell">
+  <aside class="dash-sidebar">
+    <a href="/" class="brand"><span class="brand-mark">🧹</span> CampusClean</a>
+    <nav class="dash-nav">
+      <button data-section="bookings" class="active"><span class="ico">🧺</span> My Bookings</button>
+      <button data-section="cleaners"><span class="ico">🔍</span> Find a Cleaner</button>
+      <button data-section="messages"><span class="ico">💬</span> Messages</button>
+    </nav>
+    <div class="dash-user">
+  <div class="avatar-wrap" id="avatarWrap" title="Change photo">
+    <div id="sidebarAvatar"></div>
+    <span class="avatar-edit-hint">Change</span>
+  </div>
+  <input type="file" id="avatarInput" accept="image/*" style="display:none;">
+  <div class="name" id="userName" style="margin-top:10px;">—</div>
+  <div class="role">Student · Room <span id="userRoom">—</span></div>
+  <button class="btn btn-outline-light btn-sm btn-block" data-logout>Sign out</button>
+</div>
+  </aside>
+
+  <main class="dash-main">
+    <div class="dash-topbar">
+      <button class="btn btn-ghost btn-sm" data-sidebar-toggle style="display:none;" aria-label="Toggle menu">☰</button>
+      <div>
+        <h1>Student Dashboard</h1>
+        <p class="sub">Request cleans, track them live, and rate finished jobs.</p>
+      </div>
+      <button class="btn btn-primary" data-new-request>+ Request a clean</button>
+    </div>
+
+    <div class="dash-content">
+
+      <section class="dash-section active" id="section-bookings">
+        <div class="booking-list" id="bookingList"></div>
+      </section>
+
+      <section class="dash-section" id="section-cleaners">
+        <div class="search-row">
+          <input type="text" id="cleanerSearch" placeholder="Search cleaners by name…">
+        </div>
+        <div class="card-grid" id="cleanerList"></div>
+      </section>
+
+      <section class="dash-section" id="section-messages">
+        <div style="display:grid; grid-template-columns: 260px 1fr; gap:18px;">
+          <div class="table-wrap" id="chatThreadList" style="max-height:460px; overflow-y:auto;"></div>
+          <div class="chat-panel">
+            <div class="chat-head"><h4 id="chatPartnerName">Select a conversation</h4></div>
+            <div class="chat-messages" id="chatMessages"><div class="chat-empty">Pick a job on the left to start chatting.</div></div>
+            <div class="chat-input-row">
+              <input type="text" id="chatInput" placeholder="Type a message…" disabled>
+              <button class="btn btn-primary btn-sm" id="chatSendBtn" disabled>Send</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<!-- New request modal -->
+<div class="modal-backdrop" id="bookingModal">
+  <div class="modal">
+    <button class="modal-close" data-modal-close>&times;</button>
+    <h3>Request a clean</h3>
+    <p id="bookingModalSub" style="font-size:0.85rem;color:var(--ink-soft);">Any available cleaner can accept this request.</p>
+    <form id="bookingForm">
+      <div class="field">
+        <label for="bkService">Service type</label>
+        <select id="bkService" required>
+          <option>General cleaning</option>
+          <option>Deep cleaning</option>
+          <option>Laundry</option>
+          <option>Dishes</option>
+          <option>Trash removal</option>
+          <option>Window cleaning</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="field-row">
+        <div class="field"><label for="bkLocation">Room / location</label><input id="bkLocation" required placeholder="e.g. B204"></div>
+        <div class="field"><label for="bkTime">Preferred time</label><input id="bkTime" type="datetime-local"></div>
+      </div>
+      <div class="field">
+        <label for="bkCleaner">Cleaner</label>
+        <select id="bkCleaner"><option value="">Any available cleaner</option></select>
+      </div>
+      <div class="field"><label for="bkDesc">Notes for the cleaner</label><textarea id="bkDesc" placeholder="Anything they should know?"></textarea></div>
+      <button class="btn btn-primary btn-block" id="bookingSubmit" type="submit">Send request</button>
+    </form>
+  </div>
+</div>
+
+<!-- Live tracking modal -->
+<div class="modal-backdrop" id="trackModal">
+  <div class="modal" style="max-width:520px;">
+    <button class="modal-close" data-modal-close>&times;</button>
+    <h3>Live location</h3>
+    <p id="trackMeta" style="font-size:0.85rem;color:var(--ink-soft); margin-bottom:14px;"></p>
+    <div class="map-card">
+      <div class="map-frame" id="trackMapEl"></div>
+      <div class="map-meta">
+        <span class="live-dot">Live</span>
+        <span id="trackWaiting">Waiting for the cleaner to start sharing…</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Rating modal -->
+<div class="modal-backdrop" id="rateModal">
+  <div class="modal">
+    <button class="modal-close" data-modal-close>&times;</button>
+    <h3>Rate this clean</h3>
+    <p id="rateModalSub" style="font-size:0.85rem;color:var(--ink-soft);"></p>
+    <div class="star-input" id="starInput">
+      <span data-star="1">★</span><span data-star="2">★</span><span data-star="3">★</span><span data-star="4">★</span><span data-star="5">★</span>
+    </div>
+    <div class="field"><label for="rateComment">Comment (optional)</label><textarea id="rateComment" placeholder="How did it go?"></textarea></div>
+    <button class="btn btn-primary btn-block" id="rateSubmit">Submit rating</button>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="/js/utils.js"></script>
+<script src="/js/chat-widget.js"></script>
+<script src="/js/student-dashboard.js"></script>
+</body>
+</html>
