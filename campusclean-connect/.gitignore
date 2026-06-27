@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+
+# Environment & secrets
+.env
+.env.local
+*.local
+
+# Build / dist output
+.dist/
+dist/
+build/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Stale SQLite artifacts (this app uses MySQL)
+*.db
+*.db-wal
+*.db-shm
+
+# User-uploaded content (keep the folder, ignore the files)
+public/uploads/avatars/*
+!public/uploads/avatars/.gitkeep
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

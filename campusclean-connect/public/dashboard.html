@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — CampusClean Connect</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="/css/main.css">
+<link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+
+<div class="dash-shell">
+  <aside class="dash-sidebar">
+    <a href="/" class="brand"><span class="brand-mark">✦</span> CampusClean</a>
+    <nav class="dash-nav" aria-label="Dashboard sections">
+      <button data-section="bookings" class="active" aria-current="page"><span class="ico" aria-hidden="true">🧺</span> My Bookings</button>
+      <button data-section="cleaners"><span class="ico" aria-hidden="true">🔍</span> Find a Cleaner</button>
+      <button data-section="messages"><span class="ico" aria-hidden="true">💬</span> Messages</button>
+      <button data-section="profile"><span class="ico" aria-hidden="true">⚙️</span> Profile</button>
+    </nav>
+    <div class="dash-user">
+      <div class="avatar-wrap" id="avatarWrap" title="Change photo">
+        <div id="sidebarAvatar"></div>
+        <span class="avatar-edit-hint">Change</span>
+      </div>
+      <input type="file" id="avatarInput" accept="image/*" style="display:none;">
+      <div class="name" id="userName" style="margin-top:10px;">—</div>
+      <div class="role" id="userRoleLine">—</div>
+      <button class="btn btn-outline-light btn-sm btn-block" data-logout>Sign out</button>
+    </div>
+  </aside>
+
+  <main class="dash-main" id="main-content">
+    <div class="dash-topbar">
+      <button class="btn btn-ghost btn-sm" data-sidebar-toggle aria-label="Toggle menu">☰</button>
+      <div>
+        <h1 id="dashTitle">My Bookings</h1>
+        <nav class="dash-breadcrumb" id="dashBreadcrumb" aria-label="Breadcrumb"></nav>
+        <p class="sub" id="dashSub">Request cleans, track them live, and rate finished jobs.</p>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-ghost btn-sm" data-help-open type="button" title="Help and FAQ">? Help</button>
+        <button class="btn btn-primary" data-new-request>+ Request a clean</button>
+      </div>
+    </div>
+
+    <div class="dash-content">
+
+      <section class="dash-section active" id="section-bookings">
+        <div id="bookingSummary" class="booking-summary" hidden></div>
+        <div class="tabs-inline" role="tablist" aria-label="Booking filters">
+          <button data-bookingtab="pending" class="active" role="tab" aria-selected="true">Pending</button>
+          <button data-bookingtab="active" role="tab" aria-selected="false">Active</button>
+          <button data-bookingtab="history" role="tab" aria-selected="false">History</button>
+        </div>
+        <div class="booking-list" id="bookingList"></div>
+      </section>
+
+      <section class="dash-section" id="section-cleaners">
+        <div class="search-row">
+          <input type="text" id="cleanerSearch" placeholder="Search cleaners by name…">
+          <select id="skillFilter">
+            <option value="">All skills</option>
+            <option value="General cleaning">General cleaning</option>
+            <option value="Deep cleaning">Deep cleaning</option>
+            <option value="Laundry">Laundry</option>
+            <option value="Dishes">Dishes</option>
+            <option value="Trash removal">Trash removal</option>
+            <option value="Window cleaning">Window cleaning</option>
+          </select>
+          <select id="availFilter">
+            <option value="">Any status</option>
+            <option value="available">Available</option>
+            <option value="busy">Busy</option>
+            <option value="offline">Offline</option>
+          </select>
+        </div>
+        <div class="card-grid" id="cleanerList"></div>
+      </section>
+
+      <section class="dash-section" id="section-messages">
+        <div class="chat-layout">
+          <div class="table-wrap" id="chatThreadList" style="max-height:460px; overflow-y:auto;"></div>
+          <div class="chat-panel">
+            <div class="chat-head"><h4 id="chatPartnerName">Select a conversation</h4></div>
+            <div class="chat-messages" id="chatMessages"><div class="chat-empty">Pick a booking on the left to start chatting. Conversations appear once a cleaner accepts your request.</div></div>
+            <div class="chat-input-row">
+              <input type="text" id="chatInput" placeholder="Type a message…" disabled>
+              <button class="btn btn-primary btn-sm" id="chatSendBtn" disabled>Send</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="dash-section" id="section-profile">
+        <div class="panel-card">
+          <h3>Profile settings</h3>
+          <p style="font-size:0.85rem;color:var(--ink-soft); margin-bottom:18px;">Update your contact details and default location for new bookings.</p>
+          <form id="profileForm">
+            <div class="field"><label for="pfName">Full name</label><input id="pfName" required></div>
+            <div class="field-row">
+              <div class="field"><label for="pfEmail">Email</label><input type="email" id="pfEmail"></div>
+              <div class="field"><label for="pfPhone">Phone</label><input type="tel" id="pfPhone"></div>
+            </div>
+            <div id="studentProfileFields">
+              <div class="field"><label for="pfRoom">Room number</label><input id="pfRoom" placeholder="e.g. B204"></div>
+            </div>
+            <div id="lecturerProfileFields" style="display:none;">
+              <div class="field"><label for="pfDept">Department</label><input id="pfDept" placeholder="e.g. Computer Science"></div>
+              <div class="field"><label for="pfOffice">Office location</label><input id="pfOffice" placeholder="e.g. Faculty Block C, Room 12"></div>
+            </div>
+            <button type="submit" class="btn btn-primary">Save profile</button>
+          </form>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<div class="modal-backdrop" id="bookingModal">
+  <div class="modal">
+    <button class="modal-close" data-modal-close aria-label="Close">&times;</button>
+    <h3>Request a clean</h3>
+    <p id="bookingModalSub" style="font-size:0.85rem;color:var(--ink-soft);">Any available cleaner can accept this request.</p>
+    <form id="bookingForm">
+      <div class="field">
+        <label for="bkService">Service type</label>
+        <select id="bkService" required>
+          <option>General cleaning</option>
+          <option>Deep cleaning</option>
+          <option>Laundry</option>
+          <option>Dishes</option>
+          <option>Trash removal</option>
+          <option>Window cleaning</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="field-row">
+        <div class="field"><label for="bkLocation" id="bkLocationLabel">Room / location</label><input id="bkLocation" required placeholder="e.g. B204"></div>
+        <div class="field"><label for="bkBuilding">Building / block</label><input id="bkBuilding" placeholder="e.g. North Hall"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label for="bkRoomSize">Space size</label><select id="bkRoomSize"></select></div>
+        <div class="field"><label for="bkBathrooms">Bathrooms</label><input id="bkBathrooms" type="number" min="0" max="10" value="0"></div>
+      </div>
+      <div class="field">
+        <label>Add-ons <span class="field-hint" style="display:inline;">(optional)</span></label>
+        <div class="addon-grid" id="bkAddons"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label for="bkTime">Preferred time</label><input id="bkTime" type="datetime-local" required></div>
+        <div class="field field-check" style="align-self:end;padding-bottom:8px;">
+          <input type="checkbox" id="bkUrgent"> <label for="bkUrgent" style="margin:0;font-weight:500;">Mark as urgent</label>
+          <div class="field-hint" style="margin-left:26px;">Urgent requests are highlighted for cleaners — use when you need help sooner.</div>
+        </div>
+      </div>
+      <div class="field">
+        <label for="bkCleaner">Cleaner</label>
+        <select id="bkCleaner"><option value="">Any available cleaner</option></select>
+      </div>
+      <div class="field"><label for="bkDesc">Notes for the cleaner</label><textarea id="bkDesc" placeholder="Anything they should know?"></textarea></div>
+      <div class="price-estimate" id="bkEstimate">
+        <div class="price-estimate__head">
+          <span>Estimated price</span>
+          <span class="price-estimate__total" id="bkEstimateTotal">—</span>
+        </div>
+        <ul class="price-estimate__lines" id="bkEstimateLines"></ul>
+        <p class="field-hint" id="bkEstimateNote" style="margin:0;">You only pay after a cleaner accepts and the job is done.</p>
+      </div>
+      <button class="btn btn-primary btn-block" id="bookingSubmit" type="submit">Send request</button>
+    </form>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="trackModal">
+  <div class="modal" style="max-width:520px;">
+    <button class="modal-close" data-modal-close aria-label="Close">&times;</button>
+    <h3>Live location</h3>
+    <p id="trackMeta" style="font-size:0.85rem;color:var(--ink-soft); margin-bottom:14px;"></p>
+    <div class="map-card">
+      <div class="map-frame" id="trackMapEl"></div>
+      <div class="map-meta">
+        <span class="live-dot">Live</span>
+        <span id="trackWaiting">Waiting for the cleaner to start sharing…</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="rateModal">
+  <div class="modal">
+    <button class="modal-close" data-modal-close aria-label="Close">&times;</button>
+    <h3>Rate this clean</h3>
+    <p id="rateModalSub" style="font-size:0.85rem;color:var(--ink-soft);"></p>
+    <div class="star-input" id="starInput">
+      <span data-star="1">★</span><span data-star="2">★</span><span data-star="3">★</span><span data-star="4">★</span><span data-star="5">★</span>
+    </div>
+    <div class="field"><label for="rateComment">Comment (optional)</label><textarea id="rateComment" placeholder="How did it go?"></textarea></div>
+    <button class="btn btn-primary btn-block" id="rateSubmit">Submit rating</button>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="payModal">
+  <div class="modal">
+    <button class="modal-close" data-modal-close aria-label="Close">&times;</button>
+    <h3>Pay for your clean</h3>
+    <p id="payModalSub" style="font-size:0.85rem;color:var(--ink-soft);"></p>
+    <div class="pay-amount" id="payAmount">—</div>
+    <div class="pay-methods" id="payMethods"></div>
+    <p class="field-hint" id="payCommissionNote" style="margin-top:12px;"></p>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://js.paystack.co/v1/inline.js"></script>
+<script src="/js/utils.js"></script>
+<script src="/js/notifications.js"></script>
+<script src="/js/payments.js"></script>
+<script src="/js/help.js"></script>
+<script src="/js/chat-widget.js"></script>
+<script src="/js/student-dashboard.js"></script>
+</body>
+</html>

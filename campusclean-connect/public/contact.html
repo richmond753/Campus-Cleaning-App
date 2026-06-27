@@ -3,60 +3,52 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Contact us — CampusClean Connect</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<title>Contact — CampusClean Connect</title>
 <link rel="stylesheet" href="/css/main.css">
 </head>
 <body>
 
 <nav class="site-nav">
   <div class="wrap">
-    <a href="/" class="brand"><span class="brand-mark">🧹</span> CampusClean Connect</a>
+    <a href="/" class="brand"><span class="brand-mark">✦</span> CampusClean</a>
     <div class="nav-links">
-      <a href="/index.html#features">Features</a>
-      <a href="/index.html#roles">Dashboards</a>
-      <a href="/contact.html">Contact</a>
+      <a href="/#features">Features</a>
+      <a href="/login.html">Sign in</a>
     </div>
     <div class="nav-cta">
-      <a href="/login.html" class="btn btn-ghost btn-sm">Sign in</a>
       <a href="/register.html" class="btn btn-primary btn-sm">Get started</a>
     </div>
   </div>
 </nav>
 
-<div class="auth-shell" style="min-height: calc(100vh - 73px);">
-  <div class="auth-card" style="max-width: 540px;">
-    <p class="auth-eyebrow">We're listening</p>
-    <h1 style="text-align:center; font-size:1.5rem;">Contact &amp; feedback</h1>
-    <p class="auth-lede">Spotted a bug, have an idea, or need to reach an administrator directly? Send a message below — it lands straight in the admin inbox.</p>
-
-    <div class="form-error" id="contactError"></div>
-    <div class="form-success" id="contactSuccess"></div>
-
-    <form id="contactForm">
-      <div class="field-row">
-        <div class="field">
-          <label for="cName">Your name</label>
-          <input type="text" id="cName" required>
+<div class="auth-page" style="min-height:calc(100vh - 65px);">
+  <aside class="auth-panel">
+    <h2>We'd love to hear from you</h2>
+    <p>Report a bug, suggest a feature, or reach the admin team directly. Every message lands in the admin feedback inbox.</p>
+    <ul class="check-list">
+      <li>Bug reports &amp; technical issues</li>
+      <li>Feature suggestions</li>
+      <li>Account or booking disputes</li>
+      <li>General campus cleaning feedback</li>
+    </ul>
+  </aside>
+  <main class="auth-form-side">
+    <div class="auth-card" style="max-width:500px;">
+      <h1>Contact &amp; feedback</h1>
+      <p class="sub">Fill in the form and an administrator will review your message.</p>
+      <div class="form-error" id="contactError"></div>
+      <div class="form-success" id="contactSuccess"></div>
+      <form id="contactForm">
+        <div class="field-row">
+          <div class="field"><label for="cName">Your name</label><input type="text" id="cName" required></div>
+          <div class="field"><label for="cEmail">Email</label><input type="email" id="cEmail"></div>
         </div>
-        <div class="field">
-          <label for="cEmail">Email</label>
-          <input type="email" id="cEmail">
-        </div>
-      </div>
-      <div class="field">
-        <label for="cSubject">Subject</label>
-        <input type="text" id="cSubject" placeholder="e.g. Feature suggestion, bug report…">
-      </div>
-      <div class="field">
-        <label for="cMessage">Message</label>
-        <textarea id="cMessage" required placeholder="What's on your mind?"></textarea>
-      </div>
-      <button type="submit" class="btn btn-primary btn-block" id="contactSubmit">Send message</button>
-    </form>
-  </div>
+        <div class="field"><label for="cSubject">Subject</label><input type="text" id="cSubject" placeholder="e.g. Bug report, feature idea…"></div>
+        <div class="field"><label for="cMessage">Message</label><textarea id="cMessage" required placeholder="Tell us what's on your mind…"></textarea></div>
+        <button type="submit" class="btn btn-primary btn-block" id="contactSubmit">Send message</button>
+      </form>
+    </div>
+  </main>
 </div>
 
 <script src="/js/utils.js"></script>

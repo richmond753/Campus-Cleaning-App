@@ -2,45 +2,78 @@ const user = guardRole('admin');
 let allUsers = [];
 let allBookings = [];
 let allFeedback = [];
+let bookingStatusFilter = '';
 
 if (user) {
   document.getElementById('userName').textContent = user.full_name;
-  renderSidebarAvatar(user);
-wireAvatarUpload();
   initDashboard();
 }
 
 async function initDashboard() {
   wireNav();
   wireUserSearch();
-  await Promise.all([loadUsers(), loadBookings(), loadFeedback(), loadPlatformRating()]);
+  wireBookingFilters();
+  wireHelpButton('admin');
+  wireAdminNotifications();
+  runOnboarding('admin');
+  const usersBody = document.getElementById('usersTableBody');
+  const bookingsBody = document.getElementById('bookingsTableBody');
+  if (usersBody) usersBody.innerHTML = '<tr><td colspan="7" style="padding:28px;"><div class="skeleton-line w80"></div><div class="skeleton-line w60"></div></td></tr>';
+  if (bookingsBody) bookingsBody.innerHTML = '<tr><td colspan="7" style="padding:28px;"><div class="skeleton-line w80"></div><div class="skeleton-line w60"></div></td></tr>';
+  await Promise.all([loadUsers(), loadBookings(), loadFeedback(), loadPlatformRating(), loadAdminNotifications(), loadRevenue()]);
   renderOverview();
+
+  initDashHashRouting({
+    defaultSection: 'overview',
+    defaultTab: null,
+    onNavigate: (section) => applySection(section)
+  });
+}
+
+const ADMIN_SECTIONS = { overview: 'Overview', users: 'Users', bookings: 'Bookings', feedback: 'Feedback', notifications: 'Notifications' };
+
+function applySection(name) {
+  updateDashNavA11y(name);
+  document.querySelectorAll('.dash-section').forEach((s) => s.classList.toggle('active', s.id === `section-${name}`));
+  closeSidebar();
+  setDashHash(name, null);
+  updateDashBreadcrumb(['Dashboard', ADMIN_SECTIONS[name] || name]);
 }
 
 function wireNav() {
   document.querySelectorAll('.dash-nav button[data-section]').forEach((btn) => {
-    btn.addEventListener('click', () => switchSection(btn.dataset.section));
+    btn.addEventListener('click', () => applySection(btn.dataset.section));
   });
 }
 function switchSection(name) {
-  document.querySelectorAll('.dash-nav button[data-section]').forEach((b) => b.classList.toggle('active', b.dataset.section === name));
-  document.querySelectorAll('.dash-section').forEach((s) => s.classList.toggle('active', s.id === `section-${name}`));
-  document.querySelector('.dash-sidebar')?.classList.remove('open');
+  applySection(name);
 }
 
-/* ---------------- Overview ---------------- */
 function renderOverview() {
   const cleaners = allUsers.filter((u) => u.role === 'cleaner');
   const students = allUsers.filter((u) => u.role === 'student');
+  const lecturers = allUsers.filter((u) => u.role === 'lecturer');
   const completed = allBookings.filter((b) => b.status === 'completed').length;
   const pendingFeedback = allFeedback.filter((f) => f.status === 'new').length;
 
   document.getElementById('ovTotalUsers').textContent = allUsers.length;
   document.getElementById('ovTotalCleaners').textContent = cleaners.length;
   document.getElementById('ovTotalStudents').textContent = students.length;
+  document.getElementById('ovTotalLecturers').textContent = lecturers.length;
   document.getElementById('ovTotalBookings').textContent = allBookings.length;
   document.getElementById('ovCompleted').textContent = completed;
   document.getElementById('ovPendingFeedback').textContent = pendingFeedback;
+}
+
+async function loadRevenue() {
+  try {
+    const { totals } = await api('/payments/summary');
+    const cur = 'GHS';
+    const rev = document.getElementById('ovRevenue');
+    const paid = document.getElementById('ovPaidCleaners');
+    if (rev) rev.textContent = `${cur} ${Number(totals?.platform_revenue || 0).toFixed(2)}`;
+    if (paid) paid.textContent = `${cur} ${Number(totals?.paid_to_cleaners || 0).toFixed(2)}`;
+  } catch (_) { /* leave dash */ }
 }
 
 async function loadPlatformRating() {
@@ -52,7 +85,6 @@ async function loadPlatformRating() {
   } catch (_) { /* leave dash */ }
 }
 
-/* ---------------- Manage users ---------------- */
 async function loadUsers() {
   try {
     const { users } = await api('/users/');
@@ -82,7 +114,7 @@ function renderUsersTable(filter = '') {
       <td><strong>${escapeHtml(u.full_name)}</strong><br><span style="font-size:0.78rem;color:var(--ink-soft);">@${escapeHtml(u.username)}</span></td>
       <td style="text-transform:capitalize;">${escapeHtml(u.role)}</td>
       <td>${escapeHtml(u.email || '—')}</td>
-      <td>${u.role === 'student' ? escapeHtml(u.room_number || '—') : (u.role === 'cleaner' ? availabilityPill(u.availability) : '—')}</td>
+      <td>${u.role === 'student' ? escapeHtml(u.room_number || '—') : u.role === 'lecturer' ? escapeHtml(u.office_location || u.department || '—') : (u.role === 'cleaner' ? availabilityPill(u.availability) : '—')}</td>
       <td><span class="pill ${u.status === 'active' ? 'pill-available' : 'pill-cancelled'}">${u.status === 'active' ? 'Active' : 'Suspended'}</span></td>
       <td>${formatDateTime(u.created_at)}</td>
       <td class="table-actions">
@@ -98,17 +130,32 @@ function renderUsersTable(filter = '') {
 
 async function toggleUserStatus(id, currentStatus) {
   const next = currentStatus === 'active' ? 'suspended' : 'active';
-  if (!confirm(`${next === 'suspended' ? 'Suspend' : 'Reactivate'} this account?`)) return;
+  const ok = await showConfirm({
+    title: next === 'suspended' ? 'Suspend this account?' : 'Reactivate this account?',
+    message: next === 'suspended'
+      ? 'The user will not be able to sign in until you reactivate them.'
+      : 'This user will regain full access to the platform.',
+    confirmLabel: next === 'suspended' ? 'Suspend' : 'Reactivate',
+    danger: next === 'suspended'
+  });
+  if (!ok) return;
   try {
     await api(`/users/${id}/status`, { method: 'PATCH', body: { status: next } });
     showToast('User updated.', 'success');
     loadUsers();
+    renderOverview();
   } catch (err) {
     showToast(err.message, 'error');
   }
 }
 
-/* ---------------- Manage bookings ---------------- */
+function wireBookingFilters() {
+  document.getElementById('bookingStatusFilter')?.addEventListener('change', (e) => {
+    bookingStatusFilter = e.target.value;
+    renderBookingsTable();
+  });
+}
+
 async function loadBookings() {
   try {
     const { bookings } = await api('/bookings');
@@ -121,14 +168,17 @@ async function loadBookings() {
 
 function renderBookingsTable() {
   const tbody = document.getElementById('bookingsTableBody');
-  if (!allBookings.length) {
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--ink-soft); padding:32px;">No bookings yet.</td></tr>`;
+  let rows = allBookings;
+  if (bookingStatusFilter) rows = rows.filter((b) => b.status === bookingStatusFilter);
+
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--ink-soft); padding:32px;">No bookings match this filter.</td></tr>`;
     return;
   }
-  tbody.innerHTML = allBookings.map((b) => `
+  tbody.innerHTML = rows.map((b) => `
     <tr>
       <td class="mono">BK-${String(b.id).padStart(4, '0')}</td>
-      <td>${escapeHtml(b.student_name)}</td>
+      <td>${escapeHtml(b.requester_name || b.student_name)} <span class="muted">(${b.requester_role === 'lecturer' ? 'Lecturer' : 'Student'})</span></td>
       <td>${b.cleaner_name ? escapeHtml(b.cleaner_name) : '—'}</td>
       <td>${escapeHtml(b.service_type)}</td>
       <td>${escapeHtml(b.location)}</td>
@@ -145,9 +195,15 @@ function renderBookingsTable() {
 }
 
 async function cancelBookingAdmin(id) {
-  if (!confirm('Cancel this booking? This cannot be undone.')) return;
+  const reason = await showPromptConfirm({
+    title: 'Cancel this booking?',
+    message: 'This cannot be undone. The booking will be marked cancelled immediately.',
+    inputLabel: 'Reason for cancellation (optional)',
+    confirmLabel: 'Cancel booking'
+  });
+  if (reason === false) return;
   try {
-    await api(`/bookings/${id}/status`, { method: 'PATCH', body: { status: 'cancelled' } });
+    await api(`/bookings/${id}/status`, { method: 'PATCH', body: { status: 'cancelled', cancel_reason: reason } });
     showToast('Booking cancelled.', 'success');
     loadBookings();
     renderOverview();
@@ -156,7 +212,6 @@ async function cancelBookingAdmin(id) {
   }
 }
 
-/* ---------------- Feedback inbox ---------------- */
 async function loadFeedback() {
   try {
     const { feedback } = await api('/feedback');
@@ -208,44 +263,84 @@ async function updateFeedbackStatus(id, status) {
     showToast(err.message, 'error');
   }
 }
-function renderSidebarAvatar(u) {
-  const wrap = document.getElementById('sidebarAvatar');
-  if (wrap) wrap.innerHTML = avatarHtml(u, 'avatar-lg');
+
+/* ---------------- Notifications section ---------------- */
+const NOTIF_ICONS = { booking: '🧾', chat: '💬', info: '🔔', otp: '🔑' };
+let adminNotifs = [];
+
+function wireAdminNotifications() {
+  document.getElementById('adminNotifReadAll')?.addEventListener('click', markAllAdminNotifsRead);
+  if (typeof getSocket === 'function') {
+    const socket = getSocket();
+    socket?.on('notification:new', (n) => {
+      adminNotifs.unshift(n);
+      if (adminNotifs.length > 50) adminNotifs.pop();
+      renderAdminNotifs();
+      updateNavNotifBadge();
+    });
+  }
 }
 
-function wireAvatarUpload() {
-  const wrap = document.getElementById('avatarWrap');
-  const input = document.getElementById('avatarInput');
-  if (!wrap || !input) return;
+async function loadAdminNotifications() {
+  try {
+    const { notifications } = await api('/notifications');
+    adminNotifs = notifications || [];
+    renderAdminNotifs();
+    updateNavNotifBadge();
+  } catch (_) { /* leave empty */ }
+}
 
-  wrap.addEventListener('click', () => input.click());
+function updateNavNotifBadge() {
+  const badge = document.getElementById('navNotifBadge');
+  if (!badge) return;
+  const unread = adminNotifs.filter((n) => !n.is_read).length;
+  if (unread > 0) {
+    badge.hidden = false;
+    badge.textContent = unread > 99 ? '99+' : String(unread);
+  } else {
+    badge.hidden = true;
+  }
+}
 
-  input.addEventListener('change', async () => {
-    const file = input.files[0];
-    if (!file) return;
+function renderAdminNotifs() {
+  const wrap = document.getElementById('adminNotifList');
+  if (!wrap) return;
+  if (!adminNotifs.length) {
+    wrap.innerHTML = `<div class="empty-state"><p>No notifications yet. New signups, feedback, and booking activity will appear here.</p></div>`;
+    return;
+  }
+  wrap.innerHTML = adminNotifs.map((n) => `
+    <button type="button" class="admin-notif ${n.is_read ? '' : 'unread'}" data-id="${n.id}" data-link="${n.link || ''}">
+      <span class="admin-notif__icon">${NOTIF_ICONS[n.type] || NOTIF_ICONS.info}</span>
+      <span class="admin-notif__body">
+        <span class="admin-notif__title">${escapeHtml(n.title)}</span>
+        ${n.body ? `<span class="admin-notif__text">${escapeHtml(n.body)}</span>` : ''}
+        <span class="admin-notif__time">${timeAgo(n.created_at)}</span>
+      </span>
+    </button>`).join('');
 
-    const formData = new FormData();
-    formData.append('avatar', file);
-
-    try {
-      const res = await fetch('/api/users/me/avatar', {
-        method: 'PATCH',
-        body: formData,
-        credentials: 'same-origin'
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-
-      // Update the session cache and re-render the sidebar avatar
-      const session = getSession();
-      session.avatar = data.avatar;
-      setSession(session);
-      renderSidebarAvatar(session);
-      showToast('Profile photo updated!', 'success');
-    } catch (err) {
-      showToast(err.message, 'error');
-    } finally {
-      input.value = '';
-    }
+  wrap.querySelectorAll('.admin-notif').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const id = Number(btn.dataset.id);
+      markAdminNotifRead(id);
+      const link = btn.dataset.link;
+      if (link) window.location.href = link;
+    });
   });
+}
+
+async function markAdminNotifRead(id) {
+  const n = adminNotifs.find((x) => x.id === id);
+  if (!n || n.is_read) return;
+  n.is_read = 1;
+  renderAdminNotifs();
+  updateNavNotifBadge();
+  try { await api(`/notifications/${id}/read`, { method: 'PATCH' }); } catch (_) { /* ignore */ }
+}
+
+async function markAllAdminNotifsRead() {
+  adminNotifs.forEach((n) => { n.is_read = 1; });
+  renderAdminNotifs();
+  updateNavNotifBadge();
+  try { await api('/notifications/read-all', { method: 'PATCH' }); } catch (_) { /* ignore */ }
 }

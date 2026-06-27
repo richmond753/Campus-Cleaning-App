@@ -1,13 +1,12 @@
-/* Chat widget — one thread per booking, scoped through the booking_<id> socket room.
-   Used by both student-dashboard.js and cleaner-dashboard.js. Expects these elements
-   to exist on the page: #chatThreadList, #chatPanel, #chatPartnerName, #chatMessages,
-   #chatInput, #chatSendBtn. */
+/* Chat widget — one thread per booking. Used by requester and cleaner dashboards. */
 
 let currentChatBookingId = null;
 let currentChatBookings = [];
 
 function chatPartnerName(booking, myRole) {
-  return myRole === 'student' ? (booking.cleaner_name || 'Cleaner') : (booking.student_name || 'Student');
+  if (BOOKER_ROLES.includes(myRole)) return booking.cleaner_name || 'Cleaner';
+  const role = booking.requester_role === 'lecturer' ? 'Lecturer' : 'Student';
+  return `${booking.requester_name || role} (${role})`;
 }
 
 function renderChatThreadList(bookings, myRole) {
@@ -16,16 +15,20 @@ function renderChatThreadList(bookings, myRole) {
   currentChatBookings = bookings;
 
   if (!bookings.length) {
-    list.innerHTML = `<div class="empty-state" style="padding:32px 16px;">
-      <p style="margin:0;">No conversations yet. ${myRole === 'student' ? 'Once a cleaner accepts your request, you can chat with them here.' : 'Once you accept a job, you can chat with the student here.'}</p>
-    </div>`;
+    const hint = BOOKER_ROLES.includes(myRole)
+      ? 'Once a cleaner accepts your request, you can chat with them here.'
+      : 'Once you accept a job, you can chat with the client here.';
+    list.innerHTML = `<div class="empty-state" style="padding:32px 16px;"><p style="margin:0;">No conversations yet. ${hint}</p></div>`;
     return;
   }
 
   list.innerHTML = bookings.map((b) => `
     <button type="button" class="dash-nav-thread" data-booking-id="${b.id}"
       style="width:100%; text-align:left; padding:13px 16px; border:none; background:none; border-bottom:1px solid var(--slate-mist); cursor:pointer; display:block;">
-      <strong style="font-size:0.88rem;">${escapeHtml(chatPartnerName(b, myRole))}</strong>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+        <strong style="font-size:0.88rem;">${escapeHtml(chatPartnerName(b, myRole))}</strong>
+        <span class="mono" style="font-size:0.72rem;color:var(--ink-faint);">BK-${String(b.id).padStart(4, '0')}</span>
+      </div>
       <div style="font-size:0.76rem; color:var(--ink-soft); margin-top:2px;">${escapeHtml(b.service_type)} · ${escapeHtml(b.location)}</div>
       <div style="margin-top:6px;">${statusPill(b.status)}</div>
     </button>
@@ -41,9 +44,8 @@ function renderChatThreadList(bookings, myRole) {
 
 async function selectChatThread(booking, myRole) {
   currentChatBookingId = booking.id;
-  document.getElementById('chatPartnerName').textContent = chatPartnerName(booking, myRole);
-  document.getElementById('chatInput').disabled = false;
-  document.getElementById('chatSendBtn').disabled = false;
+  document.getElementById('chatPartnerName').textContent = `${chatPartnerName(booking, myRole)} · BK-${String(booking.id).padStart(4, '0')}`;
+  setChatInputState(booking);
 
   const socket = getSocket();
   if (socket) socket.emit('chat:join', { bookingId: booking.id });
@@ -54,13 +56,42 @@ async function selectChatThread(booking, myRole) {
   try {
     const { messages } = await api(`/messages/booking/${booking.id}`);
     messagesEl.innerHTML = '';
-    if (!messages.length) {
-      messagesEl.innerHTML = `<div class="chat-empty">No messages yet. Say hello and confirm the details for room ${escapeHtml(booking.location)}.</div>`;
-    } else {
+    if (['completed', 'cancelled', 'declined'].includes(booking.status)) {
+      const notice = document.createElement('div');
+      notice.className = 'chat-closed-notice';
+      notice.textContent = `This job is ${STATUS_LABELS[booking.status] || booking.status}. Messaging is closed.`;
+      messagesEl.appendChild(notice);
+    }
+    if (!messages.length && !['completed', 'cancelled', 'declined'].includes(booking.status)) {
+      messagesEl.innerHTML = `<div class="chat-empty">No messages yet. Confirm the details for ${escapeHtml(booking.location)}.</div>`;
+    } else if (messages.length) {
       messages.forEach((m) => appendChatBubble(m));
     }
   } catch (err) {
     messagesEl.innerHTML = `<div class="chat-empty">Couldn't load this conversation: ${escapeHtml(err.message)}</div>`;
+  }
+}
+
+function setChatInputState(booking) {
+  const closed = ['completed', 'cancelled', 'declined'].includes(booking?.status);
+  const input = document.getElementById('chatInput');
+  const sendBtn = document.getElementById('chatSendBtn');
+  if (!input || !sendBtn) return;
+  input.disabled = closed;
+  sendBtn.disabled = closed;
+  input.placeholder = closed ? 'This conversation is closed — the job has ended.' : 'Type a message…';
+}
+
+function refreshChatBookingState(booking) {
+  if (!booking || Number(booking.id) !== Number(currentChatBookingId)) return;
+  setChatInputState(booking);
+  const messagesEl = document.getElementById('chatMessages');
+  if (!messagesEl || messagesEl.querySelector('.chat-closed-notice')) return;
+  if (['completed', 'cancelled', 'declined'].includes(booking.status)) {
+    const notice = document.createElement('div');
+    notice.className = 'chat-closed-notice';
+    notice.textContent = `This job is ${STATUS_LABELS[booking.status] || booking.status}. Messaging is closed.`;
+    messagesEl.prepend(notice);
   }
 }
 

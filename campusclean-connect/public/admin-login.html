@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — CampusClean Connect</title>
+<link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+<div class="auth-page">
+  <aside class="auth-panel">
+    <a href="/" class="brand" style="margin-bottom:40px;"><span class="brand-mark">🛡️</span> Admin Portal</a>
+    <h2>Platform administration</h2>
+    <p>Manage users, bookings, and feedback from a single dashboard.</p>
+    <ul class="check-list">
+      <li>View platform-wide statistics</li>
+      <li>Suspend or reactivate accounts</li>
+      <li>Filter and cancel bookings</li>
+      <li>Handle contact &amp; feedback inbox</li>
+    </ul>
+  </aside>
+  <main class="auth-form-side">
+    <div class="auth-card">
+      <h1>Admin sign in</h1>
+      <p class="sub">For platform administrators only.</p>
+      <div class="form-error" id="loginError"></div>
+      <form id="loginForm">
+        <div class="field"><label for="username">Username</label><input type="text" id="username" required></div>
+        <div class="field"><label for="password">Password</label><input type="password" id="password" required></div>
+        <button type="submit" class="btn btn-primary btn-block" id="loginSubmit">Sign in →</button>
+      </form>
+      <p class="auth-switch"><a href="/login.html">← Back to main sign in</a></p>
+      <div class="demo-creds" id="demoCreds"></div>
+    </div>
+  </main>
+</div>
+<script src="/js/utils.js"></script>
+<script src="/js/admin-login.js"></script>
+</body>
+</html>

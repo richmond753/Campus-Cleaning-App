@@ -3,90 +3,81 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Create an account — CampusClean Connect</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<title>Register — CampusClean Connect</title>
 <link rel="stylesheet" href="/css/main.css">
 </head>
 <body>
 
-<div class="auth-shell">
-  <div class="auth-card">
-    <div class="auth-brand">
-      <span class="brand-mark">🧹</span>
-      <strong style="font-family: var(--font-display); font-size:1.1rem;">CampusClean Connect</strong>
+<main id="main-content" class="auth-page">
+  <aside class="auth-panel">
+    <a href="/" class="brand" style="margin-bottom:40px;"><span class="brand-mark">✦</span> CampusClean</a>
+    <h2>Join the platform</h2>
+    <p>Register as a student, lecturer, or cleaner. Admin accounts are issued separately.</p>
+    <ul class="check-list">
+      <li>Book cleaners for dorms or offices</li>
+      <li>Filter by skill, rating, and availability</li>
+      <li>Real-time messaging per booking</li>
+      <li>Profile with your default location</li>
+    </ul>
+  </aside>
+  <div class="auth-form-side">
+    <div class="auth-card" style="max-width:480px;">
+      <h1>Create account</h1>
+      <p class="sub">Fill in your details below.</p>
+
+      <div class="role-select" role="group" aria-label="Account type">
+        <div class="role-option active" data-role="student" tabindex="0" role="button"><span class="role-icon" aria-hidden="true">🎒</span><span class="role-label">Student</span></div>
+        <div class="role-option" data-role="lecturer" tabindex="0" role="button"><span class="role-icon" aria-hidden="true">📚</span><span class="role-label">Lecturer</span></div>
+        <div class="role-option" data-role="cleaner" tabindex="0" role="button"><span class="role-icon" aria-hidden="true">🧹</span><span class="role-label">Cleaner</span></div>
+      </div>
+
+      <div class="form-error" id="registerError"></div>
+      <div class="form-success" id="registerSuccess"></div>
+
+      <form id="registerForm">
+        <div class="field"><label for="fullName">Full name</label><input type="text" id="fullName" required></div>
+        <div class="field-row">
+          <div class="field"><label for="regUsername">Username</label><input type="text" id="regUsername" required></div>
+          <div class="field"><label for="regPassword">Password</label><input type="password" id="regPassword" minlength="6" required autocomplete="new-password">
+            <div class="pw-strength" id="pwStrength"><div class="pw-strength__bar"></div></div>
+            <div class="field-hint" id="pwHint">Use at least 6 characters. Mix letters, numbers, and symbols for a stronger password.</div>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label for="email">Email</label><input type="email" id="email"></div>
+          <div class="field"><label for="phone">Phone</label><input type="tel" id="phone"></div>
+        </div>
+        <div id="studentFields">
+          <div class="field"><label for="roomNumber">Room number</label><input id="roomNumber" placeholder="e.g. B204"></div>
+        </div>
+        <div id="lecturerFields" style="display:none;">
+          <div class="field"><label for="department">Department</label><input id="department" placeholder="e.g. Computer Science"></div>
+          <div class="field"><label for="officeLocation">Office location</label><input id="officeLocation" placeholder="e.g. Faculty Block C, Room 12"></div>
+        </div>
+        <div id="cleanerFields" style="display:none;">
+          <div class="field"><label for="bio">Bio</label><textarea id="bio" placeholder="Your experience and approach."></textarea></div>
+          <div class="field"><label for="skills">Skills</label><input id="skills" placeholder="Deep cleaning, Laundry, Dishes"><div class="field-hint">Comma-separated</div></div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block" id="registerSubmit">Create account</button>
+      </form>
+
+      <div id="otpPanel" class="otp-panel" hidden>
+        <div class="otp-panel__icon" aria-hidden="true">🔑</div>
+        <h2>Verify your account</h2>
+        <p class="sub">Enter the 6-digit code to activate your account. The code expires in 10 minutes.</p>
+        <div class="otp-dev-hint" id="otpDevHint" hidden></div>
+        <div class="form-error" id="otpError"></div>
+        <div class="otp-input-wrap">
+          <input id="otpInput" class="otp-input" inputmode="numeric" pattern="\d{6}" maxlength="6" autocomplete="one-time-code" placeholder="······" aria-label="Verification code">
+        </div>
+        <button type="button" class="btn btn-primary btn-block" id="otpVerifyBtn">Verify &amp; continue</button>
+        <p class="auth-switch">Didn't get a code? <a href="#" id="otpResend">Resend code</a></p>
+      </div>
+
+      <p class="auth-switch" id="signinSwitch">Already registered? <a href="/login.html">Sign in</a></p>
     </div>
-    <p class="auth-eyebrow">Join the platform</p>
-    <h1 style="text-align:center; font-size:1.5rem;">Create your account</h1>
-    <p class="auth-lede">Admin accounts are issued separately — sign up below as a student or cleaner.</p>
-
-    <div class="role-select" role="group" aria-label="Select account type" style="grid-template-columns: repeat(2, 1fr);">
-      <div class="role-option active" data-role="student" tabindex="0">
-        <span class="role-icon">🎒</span>
-        <span class="role-label">Student</span>
-      </div>
-      <div class="role-option" data-role="cleaner" tabindex="0">
-        <span class="role-icon">🧹</span>
-        <span class="role-label">Cleaner</span>
-      </div>
-    </div>
-
-    <div class="form-error" id="registerError"></div>
-    <div class="form-success" id="registerSuccess"></div>
-
-    <form id="registerForm">
-      <div class="field">
-        <label for="fullName">Full name</label>
-        <input type="text" id="fullName" required>
-      </div>
-      <div class="field-row">
-        <div class="field">
-          <label for="regUsername">Username</label>
-          <input type="text" id="regUsername" required>
-        </div>
-        <div class="field">
-          <label for="regPassword">Password</label>
-          <input type="password" id="regPassword" minlength="6" required>
-          <div class="field-hint">At least 6 characters.</div>
-        </div>
-      </div>
-      <div class="field-row">
-        <div class="field">
-          <label for="email">Email</label>
-          <input type="email" id="email">
-        </div>
-        <div class="field">
-          <label for="phone">Phone</label>
-          <input type="tel" id="phone">
-        </div>
-      </div>
-
-      <div id="studentFields">
-        <div class="field">
-          <label for="roomNumber">Room number</label>
-          <input type="text" id="roomNumber" placeholder="e.g. B204">
-        </div>
-      </div>
-
-      <div id="cleanerFields" style="display:none;">
-        <div class="field">
-          <label for="bio">Short bio</label>
-          <textarea id="bio" placeholder="Tell students a bit about your experience."></textarea>
-        </div>
-        <div class="field">
-          <label for="skills">Skills</label>
-          <input type="text" id="skills" placeholder="e.g. Deep cleaning, Laundry, Dishes">
-          <div class="field-hint">Comma-separated.</div>
-        </div>
-      </div>
-
-      <button type="submit" class="btn btn-primary btn-block" id="registerSubmit">Create account</button>
-    </form>
-
-    <p class="auth-switch">Already have an account? <a href="/login.html">Sign in</a></p>
   </div>
-</div>
+</main>
 
 <script src="/js/utils.js"></script>
 <script src="/js/register.js"></script>

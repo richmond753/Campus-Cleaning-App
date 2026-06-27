@@ -4,9 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cleaner Dashboard — CampusClean Connect</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/main.css">
 <link rel="stylesheet" href="/css/dashboard.css">
 </head>
@@ -14,11 +11,13 @@
 
 <div class="dash-shell">
   <aside class="dash-sidebar">
-    <a href="/" class="brand"><span class="brand-mark">🧹</span> CampusClean</a>
-    <nav class="dash-nav">
-      <button data-section="jobs" class="active"><span class="ico">🧹</span> Jobs</button>
-      <button data-section="messages"><span class="ico">💬</span> Messages</button>
-      <button data-section="ratings"><span class="ico">⭐</span> Ratings</button>
+    <a href="/" class="brand"><span class="brand-mark">✦</span> CampusClean</a>
+    <nav class="dash-nav" aria-label="Dashboard sections">
+      <button data-section="jobs" class="active" aria-current="page"><span class="ico" aria-hidden="true">🧹</span> Jobs</button>
+      <button data-section="earnings"><span class="ico" aria-hidden="true">💵</span> Earnings <span class="nav-badge" id="navCashBadge" hidden>0</span></button>
+      <button data-section="messages"><span class="ico" aria-hidden="true">💬</span> Messages</button>
+      <button data-section="ratings"><span class="ico" aria-hidden="true">⭐</span> Ratings</button>
+      <button data-section="profile"><span class="ico" aria-hidden="true">⚙️</span> Profile</button>
     </nav>
    <div class="dash-user">
   <div class="avatar-wrap" id="avatarWrap" title="Change photo">
@@ -32,20 +31,24 @@
 </div>
   </aside>
 
-  <main class="dash-main">
+  <main class="dash-main" id="main-content">
     <div class="dash-topbar">
-      <button class="btn btn-ghost btn-sm" data-sidebar-toggle style="display:none;" aria-label="Toggle menu">☰</button>
+      <button class="btn btn-ghost btn-sm" data-sidebar-toggle aria-label="Toggle menu">☰</button>
       <div>
         <h1>Cleaner Dashboard</h1>
+        <nav class="dash-breadcrumb" id="dashBreadcrumb" aria-label="Breadcrumb"></nav>
         <p class="sub">Accept jobs, share your live location, and grow your rating.</p>
       </div>
-      <div class="avail-toggle">
-        <span style="font-size:0.85rem; color:var(--ink-soft);">Status:</span>
-        <select class="avail-select" id="availabilitySelect">
-          <option value="available">Available</option>
-          <option value="busy">Busy</option>
-          <option value="offline">Offline</option>
-        </select>
+      <div class="topbar-actions">
+        <button class="btn btn-ghost btn-sm" data-help-open type="button" title="Help">? Help</button>
+        <div class="avail-toggle">
+          <span style="font-size:.85rem;color:var(--ink-muted);">Status</span>
+          <select class="avail-select" id="availabilitySelect">
+            <option value="available">Available</option>
+            <option value="busy">Busy</option>
+            <option value="offline">Offline</option>
+          </select>
+        </div>
       </div>
     </div>
 
@@ -67,12 +70,22 @@
         <div class="booking-list" id="jobList"></div>
       </section>
 
+      <section class="dash-section" id="section-earnings">
+        <div class="stat-grid">
+          <div class="stat-card"><div class="label">Total earned (after fee)</div><div class="value" id="earnTotal">—</div></div>
+          <div class="stat-card"><div class="label">Paid jobs</div><div class="value" id="earnPaidCount">—</div></div>
+          <div class="stat-card"><div class="label">Cash to confirm</div><div class="value" id="earnCashPending">—</div></div>
+        </div>
+        <p class="field-hint" id="earnNote" style="margin:4px 0 16px;"></p>
+        <div id="earningsList"></div>
+      </section>
+
       <section class="dash-section" id="section-messages">
-        <div style="display:grid; grid-template-columns: 260px 1fr; gap:18px;">
+        <div class="chat-layout">
           <div class="table-wrap" id="chatThreadList" style="max-height:460px; overflow-y:auto;"></div>
           <div class="chat-panel">
             <div class="chat-head"><h4 id="chatPartnerName">Select a conversation</h4></div>
-            <div class="chat-messages" id="chatMessages"><div class="chat-empty">Pick a job on the left to start chatting.</div></div>
+            <div class="chat-messages" id="chatMessages"><div class="chat-empty">Pick a job on the left to start chatting. Share live location from Active jobs so clients can track you.</div></div>
             <div class="chat-input-row">
               <input type="text" id="chatInput" placeholder="Type a message…" disabled>
               <button class="btn btn-primary btn-sm" id="chatSendBtn" disabled>Send</button>
@@ -89,12 +102,32 @@
         <div id="ratingsList"></div>
       </section>
 
+      <section class="dash-section" id="section-profile">
+        <div class="panel-card">
+          <h3>Cleaner profile</h3>
+          <p style="font-size:.88rem;color:var(--ink-muted);margin-bottom:20px;">Update your contact info, bio, and skills shown to clients.</p>
+          <form id="cleanerProfileForm">
+            <div class="field"><label for="cpName">Full name</label><input id="cpName" required></div>
+            <div class="field-row">
+              <div class="field"><label for="cpEmail">Email</label><input type="email" id="cpEmail"></div>
+              <div class="field"><label for="cpPhone">Phone</label><input type="tel" id="cpPhone"></div>
+            </div>
+            <div class="field"><label for="cpBio">Bio</label><textarea id="cpBio"></textarea></div>
+            <div class="field"><label for="cpSkills">Skills</label><input id="cpSkills"><div class="field-hint">Comma-separated</div></div>
+            <button type="submit" class="btn btn-primary">Save profile</button>
+          </form>
+        </div>
+      </section>
+
     </div>
   </main>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
 <script src="/js/utils.js"></script>
+<script src="/js/notifications.js"></script>
+<script src="/js/payments.js"></script>
+<script src="/js/help.js"></script>
 <script src="/js/chat-widget.js"></script>
 <script src="/js/cleaner-dashboard.js"></script>
 </body>
