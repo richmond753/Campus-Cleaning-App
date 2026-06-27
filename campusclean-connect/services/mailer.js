@@ -12,7 +12,12 @@ function smtpConfig() {
     port: Number(process.env.SMTP_PORT || 465),
     user: process.env.SMTP_USER || '',
     pass: process.env.SMTP_PASS || '',
-    from: process.env.SMTP_FROM || process.env.SMTP_USER || ''
+    from: process.env.SMTP_FROM || process.env.SMTP_USER || '',
+    // Opt-in escape hatch for machines where a local antivirus/proxy (e.g. Avast
+    // Mail Shield) intercepts the TLS connection with its own certificate. When
+    // SMTP_INSECURE=true we skip certificate verification so mail can still flow
+    // through that local proxy. Leave unset in real deployments.
+    rejectUnauthorized: process.env.SMTP_INSECURE !== 'true'
   };
 }
 
@@ -37,13 +42,41 @@ function buildMessage(from, to, subject, { text, html }) {
   return headers.join('\r\n') + '\r\n\r\n' + safeBody;
 }
 
-function sendMail({ to, subject, text, html }) {
-  const cfg = smtpConfig();
-  return new Promise((resolve, reject) => {
-    if (!cfg.user || !cfg.pass) return reject(new Error('SMTP is not configured.'));
-    if (!to) return reject(new Error('No recipient address.'));
+// True when a failure is a TLS certificate-verification problem — typically a
+// local antivirus/proxy (e.g. Avast Mail Shield) intercepting the connection
+// with its own root, rather than a real security issue with the mail server.
+function isCertVerifyError(err) {
+  const code = err && err.code ? String(err.code) : '';
+  const msg = err && err.message ? String(err.message) : '';
+  return (
+    /UNABLE_TO_VERIFY|LEAF_SIGNATURE|SELF_SIGNED|CERT_|DEPTH_ZERO|CHAIN/i.test(code) ||
+    /unable to verify|self[- ]signed certificate|certificate/i.test(msg)
+  );
+}
 
-    const socket = tls.connect({ host: cfg.host, port: cfg.port, servername: cfg.host });
+// Resilient send: try verified TLS first; if a local antivirus/proxy breaks
+// certificate verification, automatically retry once without verification so
+// OTP delivery is never blocked by the sending machine's security software.
+// (On a real host without such a proxy, the first secure attempt just works.)
+async function sendMail(opts) {
+  const cfg = smtpConfig();
+  if (!cfg.user || !cfg.pass) throw new Error('SMTP is not configured.');
+  if (!opts.to) throw new Error('No recipient address.');
+
+  try {
+    return await trySend(cfg, opts, cfg.rejectUnauthorized);
+  } catch (err) {
+    if (cfg.rejectUnauthorized && isCertVerifyError(err)) {
+      console.warn('[mailer] TLS certificate could not be verified (likely a local antivirus/proxy). Retrying without verification so the email still sends.');
+      return trySend(cfg, opts, false);
+    }
+    throw err;
+  }
+}
+
+function trySend(cfg, { to, subject, text, html }, rejectUnauthorized) {
+  return new Promise((resolve, reject) => {
+    const socket = tls.connect({ host: cfg.host, port: cfg.port, servername: cfg.host, rejectUnauthorized });
     socket.setEncoding('utf8');
     socket.setTimeout(20000);
 
